@@ -71,6 +71,39 @@ describe('POST /email', () => {
     });
 });
 
+describe('POST /email', () => {
+
+    let server;
+
+    beforeEach(async () => {
+
+        server = await init();
+    });
+
+    afterEach(async () => {
+
+        await server.stop();
+    });
+
+    it('responds with 400', async () => {
+
+        const res = await server.inject({
+            method: 'POST',
+            url: '/email',
+            payload: {
+                to: 'Just a name',
+                to_name: 'Mr. Fake',
+                from: 'noreply@mybrightwheel.com',
+                from_name: 'Brightwheel',
+                subject: 'A Message from Brightwheel',
+                body: '<h1>Your Bill</h1><p>$10</p>'
+            }
+        });
+
+        expect(res.statusCode).to.equal(400);
+    });
+});
+
 describe('getCleanText', () => {
 
     let server;

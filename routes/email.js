@@ -28,9 +28,9 @@ module.exports = [{
         notes: 'Determins which email service to use from env settings. All fields are required.',
         validate: {
             payload: {
-                to: Joi.string().required(),
+                to: Joi.string().email().required(),
                 to_name: Joi.string().required(),
-                from: Joi.string().required(),
+                from: Joi.string().email().required(),
                 from_name: Joi.string().required(),
                 subject: Joi.string().required(),
                 body: Joi.string().required()
