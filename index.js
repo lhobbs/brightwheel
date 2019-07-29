@@ -2,13 +2,14 @@
 
 const Hapi = require('@hapi/hapi');
 const Joi = require('@hapi/joi')
-const mailgun = require("mailgun-js");
 const env2 = require('env2')('.env')
 const DOMAIN = process.env.DOMAIN;
 const apiKey = process.env.APIKEY;
-const Wreck = require('@hapi/wreck');
-const Https = require('https');
 const request = require('request')
+
+const MailgunMessage = require('./models/MailgunMessage')
+const MandrillMessage = require('./models/MandrillMessage')
+const helpers = require('./helpers')
 
 
 const init = async () => {
@@ -34,18 +35,21 @@ const init = async () => {
             }
         },
         handler: (req, h) => {
-            const data = {
-                from: "Mailgun Sandbox <postmaster@sandbox2250e442e4c24b55b13d12eb7919ad3b.mailgun.org>",
-                to: "elisa.hobbs@colorado.edu",
-                subject: "Hello",
-                text: "Testing some Mailgun awesomness!"
-            };
-            
-            request.post({url:`https://api:${apiKey}@api.mailgun.net/v3/${DOMAIN}/messages`, form: data}, function(err,httpResponse,body){ 
+            let message = {}
+            let url = ''
+            if (process.env.DEFAULT_MAIL_SERVICE == 'MAILGUN') {
+                message = new MailgunMessage(req.payload)
+                url = helpers.getMailgunUrl()
+            }
+            else {
+                message = new MandrillMessage(req.payload)
+                url = 'https://mandrillapp.com/api/1.0/messages/send.json'
+            }
+
+            request.post({url:url, form: message}, function(err,httpResponse,body){ 
                 console.log(httpResponse, err, body)
             })
 
-            
             return 'Hello World!';
         }
     });
@@ -61,34 +65,3 @@ process.on('unhandledRejection', (err) => {
 });
 
 init();
-
-// const example = async function () {
-
-//     const data = {
-//         from: "Mailgun Sandbox <postmaster@sandbox2250e442e4c24b55b13d12eb7919ad3b.mailgun.org>",
-//         to: "elisa.hobbs@colorado.edu",
-//         subject: "Hello",
-//         text: "Testing some Mailgun awesomness!"
-//     };
-//     const basic = new Buffer(`api:${apiKey}`).toString('base64');
-//             // console.log(basic)
-//     const options = {
-//         payload: JSON.stringify(data),
-//         json: true,
-//         headers: { 
-//             'content-tyoe' : 'application/json',
-//             'Authorization': `Basic ${basic}` 
-//         }
-//     }
-//     // console.log(Buffer.from(JSON.stringify(data)))
-//     // console.dir(options)
-//     const { res, payload } = await Wreck.post(`https://api:${apiKey}@api.mailgun.net/v3/${DOMAIN}/messages`, {payload: data, json: true} );
-//     console.log(payload.toString());
-// };
-
-// try {
-//     example();
-// }
-// catch (ex) {
-//     console.error(ex);
-// }
